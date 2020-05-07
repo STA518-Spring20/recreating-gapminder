@@ -1,14 +1,16 @@
-Recreating Gapminder
-================
+---
+title: "Recreating Gapminder"
+output: github_document
+---
 
-``` r
+```{r}
 library(ggplot2)
 library(gapminder)
 ```
 
 Here is some narrative.
 
-``` r
+```{r}
 ggplot(data = gapminder) +
   geom_point(mapping = aes(x = gdpPercap, y = lifeExp, size = pop, color = continent), alpha = 0.5) +
   labs(x = "Income",
@@ -19,4 +21,6 @@ ggplot(data = gapminder) +
        subtitle = "For all years")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+
+

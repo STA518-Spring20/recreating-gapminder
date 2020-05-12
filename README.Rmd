@@ -5,10 +5,11 @@ output: github_document
 
 ```{r}
 library(ggplot2)
+library(dplyr)
 library(gapminder)
 ```
 
-Here is some narrative.
+## The Visualization
 
 ```{r}
 ggplot(data = gapminder) +
@@ -20,6 +21,174 @@ ggplot(data = gapminder) +
        title = "Gapminder Bubble Chart",
        subtitle = "For all years")
 ```
+
+
+## More with dplyr
+
+### `filter()`, `select()`, and `arrange()`
+
+```{r}
+gapminder
+```
+
+Create a copy of gapminder.
+
+```{r}
+my_gm <- gapminder
+my_gm
+```
+
+View only USA
+
+```{r}
+my_gm %>% 
+  filter(country == "United States")
+```
+
+Plot `gdpPercap` over time (`year`) for only USA
+
+```{r}
+my_gm %>% 
+  filter(country == "United States") %>% 
+  ggplot(aes(x = year, y = gdpPercap)) +
+  geom_line()
+```
+
+Subset of gapminder with only USA
+
+```{r}
+us_gm <- my_gm %>% 
+  filter(country == "United States")
+```
+
+View only year, life expectancy, and gdp percap only for USA
+
+```{r}
+us_gm %>% 
+  select(year, lifeExp, gdpPercap) %>% 
+  arrange(desc(lifeExp))
+```
+
+Reorgaize US subset with life expectancy first and drop continent
+
+```{r}
+us_gm %>% 
+  select(lifeExp, everything(), -continent)
+```
+
+rename variables
+
+```{r}
+us_gm %>% 
+  select(life_exp = lifeExp, everything())
+```
+
+Show the entries for Burundi after 1996 for only the variables `yr`, `life_exp`, and `pop`.
+
+
+```{r}
+my_gm %>% 
+  filter(country == "Burundi" & year > 1996) %>% 
+  select(yr = year, life_exp = lifeExp, pop)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

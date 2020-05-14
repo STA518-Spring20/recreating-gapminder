@@ -115,6 +115,8 @@ my_gm %>%
 
 ![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
+## May 12
+
 Subset of gapminder with only USA
 
 ``` r
@@ -207,3 +209,316 @@ my_gm %>%
     ## 1  1997     45.3 6121610
     ## 2  2002     47.4 7021078
     ## 3  2007     49.6 8390505
+
+## May 14
+
+Create `gdp` variable
+
+``` r
+my_gm %>% 
+  mutate(gdp = gdpPercap * pop,
+         gdp_billion = gdp / 1000000000)
+```
+
+    ## # A tibble: 1,704 x 8
+    ##    country     continent  year lifeExp     pop gdpPercap         gdp gdp_billion
+    ##    <fct>       <fct>     <int>   <dbl>   <int>     <dbl>       <dbl>       <dbl>
+    ##  1 Afghanistan Asia       1952    28.8  8.43e6      779.     6.57e 9        6.57
+    ##  2 Afghanistan Asia       1957    30.3  9.24e6      821.     7.59e 9        7.59
+    ##  3 Afghanistan Asia       1962    32.0  1.03e7      853.     8.76e 9        8.76
+    ##  4 Afghanistan Asia       1967    34.0  1.15e7      836.     9.65e 9        9.65
+    ##  5 Afghanistan Asia       1972    36.1  1.31e7      740.     9.68e 9        9.68
+    ##  6 Afghanistan Asia       1977    38.4  1.49e7      786.     1.17e10       11.7 
+    ##  7 Afghanistan Asia       1982    39.9  1.29e7      978.     1.26e10       12.6 
+    ##  8 Afghanistan Asia       1987    40.8  1.39e7      852.     1.18e10       11.8 
+    ##  9 Afghanistan Asia       1992    41.7  1.63e7      649.     1.06e10       10.6 
+    ## 10 Afghanistan Asia       1997    41.8  2.22e7      635.     1.41e10       14.1 
+    ## # … with 1,694 more rows
+
+``` r
+my_gm %>% 
+  mutate(gdp = gdpPercap * pop,
+         gdp_billion = gdp / 1000000000,
+         gdp = NULL)
+```
+
+    ## # A tibble: 1,704 x 7
+    ##    country     continent  year lifeExp      pop gdpPercap gdp_billion
+    ##    <fct>       <fct>     <int>   <dbl>    <int>     <dbl>       <dbl>
+    ##  1 Afghanistan Asia       1952    28.8  8425333      779.        6.57
+    ##  2 Afghanistan Asia       1957    30.3  9240934      821.        7.59
+    ##  3 Afghanistan Asia       1962    32.0 10267083      853.        8.76
+    ##  4 Afghanistan Asia       1967    34.0 11537966      836.        9.65
+    ##  5 Afghanistan Asia       1972    36.1 13079460      740.        9.68
+    ##  6 Afghanistan Asia       1977    38.4 14880372      786.       11.7 
+    ##  7 Afghanistan Asia       1982    39.9 12881816      978.       12.6 
+    ##  8 Afghanistan Asia       1987    40.8 13867957      852.       11.8 
+    ##  9 Afghanistan Asia       1992    41.7 16317921      649.       10.6 
+    ## 10 Afghanistan Asia       1997    41.8 22227415      635.       14.1 
+    ## # … with 1,694 more rows
+
+What does this code
+do?
+
+``` r
+us_tib <-  my_gm %>%                                         # copy my_gm into us_tib object, then
+  filter(country == "United States")                         # keep only the United States values
+## This is a semi-dangerous way to do this variable
+## I'd prefer to join on year, 
+## but we haven't covered joins yet (but will next week!)
+my_gm <-  my_gm %>%                                          # copy my_gm into my_gm object, then
+  mutate(tmp = rep(us_tib$gdpPercap, nlevels(country)),      # create variable tmp, that is                                                                        repeating US gdpPercap for how many                                                                 countries there are
+         gdpPercap_rel_US = gdpPercap / tmp,                # create variable var that is the ratio                                                                of gdpPercap for that country                                                                       compared to gdpPercap of US
+         tmp = NULL)                                         # remove tmp variable
+```
+
+Is the US a high GDP country?
+
+``` r
+my_gm %>% 
+  ggplot(aes(x = gdpPercap_rel_US)) +
+  geom_histogram()
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+| Function type        | Explanation                                                                                                    | Examples                            | In `dplyr`                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------- |
+| Vectorized functions | These take a vector, and operate on each component to return a vector of the same length (i.e., element-wise). | `cos`, `sin`, `log`, `exp`, `round` | `mutate`                                             |
+| Aggregate functions  | These take a vector, and return a vector of length 1                                                           | `mean`, `sd`, `length`, `typeof`    | `summarize` - can be in combination with `group_by`. |
+| Window functions     | these take a vector, and return a vector of the same length that depends on the vector as a whole.             | `lag`, `rank`, `cumsum`             | `mutate` in combination `group_by`                   |
+
+Three ways to count in R (`dplyr`)
+
+How many values/observations are in each continent?
+
+``` r
+my_gm %>% 
+  group_by(continent) %>% 
+  summarize(n = n())
+```
+
+    ## # A tibble: 5 x 2
+    ##   continent     n
+    ##   <fct>     <int>
+    ## 1 Africa      624
+    ## 2 Americas    300
+    ## 3 Asia        396
+    ## 4 Europe      360
+    ## 5 Oceania      24
+
+``` r
+my_gm %>% 
+  group_by(continent) %>% 
+  tally()
+```
+
+    ## # A tibble: 5 x 2
+    ##   continent     n
+    ##   <fct>     <int>
+    ## 1 Africa      624
+    ## 2 Americas    300
+    ## 3 Asia        396
+    ## 4 Europe      360
+    ## 5 Oceania      24
+
+``` r
+my_gm %>% 
+  count(continent)
+```
+
+    ## # A tibble: 5 x 2
+    ##   continent     n
+    ##   <fct>     <int>
+    ## 1 Africa      624
+    ## 2 Americas    300
+    ## 3 Asia        396
+    ## 4 Europe      360
+    ## 5 Oceania      24
+
+``` r
+my_gm %>% 
+  group_by(continent) %>% 
+  summarize(n = n(),
+            n_countries = n_distinct(country))
+```
+
+    ## # A tibble: 5 x 3
+    ##   continent     n n_countries
+    ##   <fct>     <int>       <int>
+    ## 1 Africa      624          52
+    ## 2 Americas    300          25
+    ## 3 Asia        396          33
+    ## 4 Europe      360          30
+    ## 5 Oceania      24           2
+
+Compute summaries for multiple variables.
+
+Compute the average and median `lifeExp` and `gdpPercap` by `continent`
+and `year`, but only for 1952 and 2007.
+
+``` r
+my_gm %>% 
+  filter(year %in% c(1952, 2007)) %>% 
+  group_by(continent, year) %>% 
+  summarize_at(vars(lifeExp, gdpPercap),
+               list(mean = mean,
+                    median = median))
+```
+
+    ## # A tibble: 10 x 6
+    ## # Groups:   continent [5]
+    ##    continent  year lifeExp_mean gdpPercap_mean lifeExp_median gdpPercap_median
+    ##    <fct>     <int>        <dbl>          <dbl>          <dbl>            <dbl>
+    ##  1 Africa     1952         39.1          1253.           38.8             987.
+    ##  2 Africa     2007         54.8          3089.           52.9            1452.
+    ##  3 Americas   1952         53.3          4079.           54.7            3048.
+    ##  4 Americas   2007         73.6         11003.           72.9            8948.
+    ##  5 Asia       1952         46.3          5195.           44.9            1207.
+    ##  6 Asia       2007         70.7         12473.           72.4            4471.
+    ##  7 Europe     1952         64.4          5661.           65.9            5142.
+    ##  8 Europe     2007         77.6         25054.           78.6           28054.
+    ##  9 Oceania    1952         69.3         10298.           69.3           10298.
+    ## 10 Oceania    2007         80.7         29810.           80.7           29810.
+
+versus no names in variables (not preferred):
+
+``` r
+my_gm %>% 
+  filter(year %in% c(1952, 2007)) %>% 
+  group_by(continent, year) %>% 
+  summarize_at(vars(lifeExp, gdpPercap),
+               list(mean, median))
+```
+
+    ## # A tibble: 10 x 6
+    ## # Groups:   continent [5]
+    ##    continent  year lifeExp_fn1 gdpPercap_fn1 lifeExp_fn2 gdpPercap_fn2
+    ##    <fct>     <int>       <dbl>         <dbl>       <dbl>         <dbl>
+    ##  1 Africa     1952        39.1         1253.        38.8          987.
+    ##  2 Africa     2007        54.8         3089.        52.9         1452.
+    ##  3 Americas   1952        53.3         4079.        54.7         3048.
+    ##  4 Americas   2007        73.6        11003.        72.9         8948.
+    ##  5 Asia       1952        46.3         5195.        44.9         1207.
+    ##  6 Asia       2007        70.7        12473.        72.4         4471.
+    ##  7 Europe     1952        64.4         5661.        65.9         5142.
+    ##  8 Europe     2007        77.6        25054.        78.6        28054.
+    ##  9 Oceania    1952        69.3        10298.        69.3        10298.
+    ## 10 Oceania    2007        80.7        29810.        80.7        29810.
+
+Grouped mutates View growth in population since first year of record by
+each country
+
+``` r
+my_gm %>% 
+  group_by(country) %>% 
+  select(country, year, pop) %>% 
+  mutate(pop_gain = pop - first(pop)) %>% 
+  filter(year < 1963)
+```
+
+    ## # A tibble: 426 x 4
+    ## # Groups:   country [142]
+    ##    country      year      pop pop_gain
+    ##    <fct>       <int>    <int>    <int>
+    ##  1 Afghanistan  1952  8425333        0
+    ##  2 Afghanistan  1957  9240934   815601
+    ##  3 Afghanistan  1962 10267083  1841750
+    ##  4 Albania      1952  1282697        0
+    ##  5 Albania      1957  1476505   193808
+    ##  6 Albania      1962  1728137   445440
+    ##  7 Algeria      1952  9279525        0
+    ##  8 Algeria      1957 10270856   991331
+    ##  9 Algeria      1962 11000948  1721423
+    ## 10 Angola       1952  4232095        0
+    ## # … with 416 more rows
+
+Calculate growth in life expectancy for each country compared to 1972
+for each country.
+
+``` r
+my_gm %>% 
+  group_by(country) %>% 
+  select(country, year, lifeExp) %>% 
+  mutate(life_exp_gain = lifeExp - nth(lifeExp, n = 5))
+```
+
+    ## # A tibble: 1,704 x 4
+    ## # Groups:   country [142]
+    ##    country      year lifeExp life_exp_gain
+    ##    <fct>       <int>   <dbl>         <dbl>
+    ##  1 Afghanistan  1952    28.8         -7.29
+    ##  2 Afghanistan  1957    30.3         -5.76
+    ##  3 Afghanistan  1962    32.0         -4.09
+    ##  4 Afghanistan  1967    34.0         -2.07
+    ##  5 Afghanistan  1972    36.1          0   
+    ##  6 Afghanistan  1977    38.4          2.35
+    ##  7 Afghanistan  1982    39.9          3.77
+    ##  8 Afghanistan  1987    40.8          4.73
+    ##  9 Afghanistan  1992    41.7          5.59
+    ## 10 Afghanistan  1997    41.8          5.67
+    ## # … with 1,694 more rows
+
+``` r
+my_gm %>%
+  filter(continent == "Asia") %>%
+  select(year, country, lifeExp) %>%
+  group_by(year) %>%
+  filter(min_rank(desc(lifeExp)) < 2 | min_rank(lifeExp) < 2) %>% 
+  arrange(year) %>%
+  print(n = Inf)
+```
+
+    ## # A tibble: 24 x 3
+    ## # Groups:   year [12]
+    ##     year country     lifeExp
+    ##    <int> <fct>         <dbl>
+    ##  1  1952 Afghanistan    28.8
+    ##  2  1952 Israel         65.4
+    ##  3  1957 Afghanistan    30.3
+    ##  4  1957 Israel         67.8
+    ##  5  1962 Afghanistan    32.0
+    ##  6  1962 Israel         69.4
+    ##  7  1967 Afghanistan    34.0
+    ##  8  1967 Japan          71.4
+    ##  9  1972 Afghanistan    36.1
+    ## 10  1972 Japan          73.4
+    ## 11  1977 Cambodia       31.2
+    ## 12  1977 Japan          75.4
+    ## 13  1982 Afghanistan    39.9
+    ## 14  1982 Japan          77.1
+    ## 15  1987 Afghanistan    40.8
+    ## 16  1987 Japan          78.7
+    ## 17  1992 Afghanistan    41.7
+    ## 18  1992 Japan          79.4
+    ## 19  1997 Afghanistan    41.8
+    ## 20  1997 Japan          80.7
+    ## 21  2002 Afghanistan    42.1
+    ## 22  2002 Japan          82  
+    ## 23  2007 Afghanistan    43.8
+    ## 24  2007 Japan          82.6
+
+Challenge: Which five countries had sharpest 5-year drop in lifeExp?
+
+``` r
+my_gm %>% 
+  group_by(country) %>% 
+  mutate(change_life_exp = lifeExp - lag(lifeExp, n = 1)) %>% 
+  ungroup() %>% 
+  top_n(n = 5, wt = change_life_exp) %>% 
+  select(country, continent, year, change_life_exp) %>% 
+  arrange(desc(change_life_exp))
+```
+
+    ## # A tibble: 5 x 4
+    ##   country   continent  year change_life_exp
+    ##   <fct>     <fct>     <int>           <dbl>
+    ## 1 Cambodia  Asia       1982           19.7 
+    ## 2 China     Asia       1967           13.9 
+    ## 3 Rwanda    Africa     1997           12.5 
+    ## 4 Rwanda    Africa     2002            7.33
+    ## 5 Mauritius Africa     1957            7.10
+
+What explains these drops in life expectancy? Post in community/Issue\!

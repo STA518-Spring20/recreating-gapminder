@@ -54,6 +54,8 @@ my_gm %>%
   geom_line()
 ```
 
+## May 12
+
 Subset of gapminder with only USA
 
 ```{r}
@@ -91,98 +93,147 @@ my_gm %>%
   filter(country == "Burundi" & year > 1996) %>% 
   select(yr = year, life_exp = lifeExp, pop)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## May 14
+
+Create `gdp` variable
+
+```{r}
+my_gm %>% 
+  mutate(gdp = gdpPercap * pop,
+         gdp_billion = gdp / 1000000000)
+```
+
+```{r}
+my_gm %>% 
+  mutate(gdp = gdpPercap * pop,
+         gdp_billion = gdp / 1000000000,
+         gdp = NULL)
+```
+
+What does this code do?
+
+```{r}
+us_tib <-  my_gm %>%                                         # copy my_gm into us_tib object, then
+  filter(country == "United States")                         # keep only the United States values
+## This is a semi-dangerous way to do this variable
+## I'd prefer to join on year, 
+## but we haven't covered joins yet (but will next week!)
+my_gm <-  my_gm %>%                                          # copy my_gm into my_gm object, then
+  mutate(tmp = rep(us_tib$gdpPercap, nlevels(country)),      # create variable tmp, that is                                                                        repeating US gdpPercap for how many                                                                 countries there are
+         gdpPercap_rel_US = gdpPercap / tmp,                # create variable var that is the ratio                                                                of gdpPercap for that country                                                                       compared to gdpPercap of US
+         tmp = NULL)                                         # remove tmp variable
+```
+
+Is the US a high GDP country?
+
+```{r}
+my_gm %>% 
+  ggplot(aes(x = gdpPercap_rel_US)) +
+  geom_histogram()
+```
+
+
+| Function type        | Explanation | Examples | In `dplyr` |
+|----------------------|-------------|----------|------------|
+| Vectorized functions | These take a vector, and operate on each component to return a vector of the same length (i.e., element-wise). | `cos`, `sin`, `log`, `exp`, `round` | `mutate` |
+| Aggregate functions  | These take a vector, and return a vector of length 1 | `mean`, `sd`, `length`, `typeof` | `summarize` - can be in combination with `group_by`. |
+| Window functions     | these take a vector, and return a vector of the same length that depends on the vector as a whole. | `lag`, `rank`, `cumsum` | `mutate` in combination `group_by` |
+
+Three ways to count in R (`dplyr`)
+
+How many values/observations are in each continent?
+
+```{r}
+my_gm %>% 
+  group_by(continent) %>% 
+  summarize(n = n())
+```
+
+```{r}
+my_gm %>% 
+  group_by(continent) %>% 
+  tally()
+```
+
+```{r}
+my_gm %>% 
+  count(continent)
+```
+
+```{r}
+my_gm %>% 
+  group_by(continent) %>% 
+  summarize(n = n(),
+            n_countries = n_distinct(country))
+```
+
+Compute summaries for multiple variables.
+
+Compute the average and median `lifeExp` and `gdpPercap` by `continent` and `year`, but only for 1952 and 2007.
+
+```{r}
+my_gm %>% 
+  filter(year %in% c(1952, 2007)) %>% 
+  group_by(continent, year) %>% 
+  summarize_at(vars(lifeExp, gdpPercap),
+               list(mean = mean,
+                    median = median))
+```
+
+versus no names in variables (not preferred):
+
+```{r}
+my_gm %>% 
+  filter(year %in% c(1952, 2007)) %>% 
+  group_by(continent, year) %>% 
+  summarize_at(vars(lifeExp, gdpPercap),
+               list(mean, median))
+```
+
+Grouped mutates
+View growth in population since first year of record by each country
+
+```{r}
+my_gm %>% 
+  group_by(country) %>% 
+  select(country, year, pop) %>% 
+  mutate(pop_gain = pop - first(pop)) %>% 
+  filter(year < 1963)
+```
+
+Calculate growth in life expectancy for each country compared to 1972 for each country.
+
+```{r}
+my_gm %>% 
+  group_by(country) %>% 
+  select(country, year, lifeExp) %>% 
+  mutate(life_exp_gain = lifeExp - nth(lifeExp, n = 5))
+```
+
+```{r}
+my_gm %>%
+  filter(continent == "Asia") %>%
+  select(year, country, lifeExp) %>%
+  group_by(year) %>%
+  filter(min_rank(desc(lifeExp)) < 2 | min_rank(lifeExp) < 2) %>% 
+  arrange(year) %>%
+  print(n = Inf)
+```
+
+Challenge:
+Which five countries had sharpest 5-year drop in lifeExp?
+
+```{r}
+my_gm %>% 
+  group_by(country) %>% 
+  mutate(change_life_exp = lifeExp - lag(lifeExp, n = 1)) %>% 
+  ungroup() %>% 
+  top_n(n = 5, wt = change_life_exp) %>% 
+  select(country, continent, year, change_life_exp) %>% 
+  arrange(desc(change_life_exp))
+```
+
+What explains these drops in life expectancy? Post in community/Issue!
 
 
 

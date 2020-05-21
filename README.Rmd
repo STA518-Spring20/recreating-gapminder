@@ -13,12 +13,13 @@ library(gapminder)
 
 ```{r}
 ggplot(data = gapminder) +
-  geom_point(mapping = aes(x = gdpPercap, y = lifeExp, size = pop, color = continent), alpha = 0.5) +
-  labs(x = "Income",
-       y = "Life Expectancy",
-       color = "World Region",
-       size = "Population",
-       title = "Gapminder Bubble Chart",
+  geom_point(mapping = aes(x = gdpPercap, y = lifeExp, 
+                           size = pop, color = continent), alpha = 0.5) +
+  labs(x = "Income", 
+       y = "Life Expectancy", 
+       color = "World Region", 
+       size = "Population", 
+       title = "Gapminder Bubble Chart", 
        subtitle = "For all years")
 ```
 

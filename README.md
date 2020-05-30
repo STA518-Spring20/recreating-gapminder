@@ -4,21 +4,9 @@ Recreating Gapminder
 ``` r
 library(ggplot2)
 library(dplyr)
-```
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
+library(tidyr)
 library(gapminder)
+library(maps)
 ```
 
 ## The Visualization
@@ -523,3 +511,354 @@ my_gm %>%
     ## 5 Mauritius Africa     1957            7.10
 
 What explains these drops in life expectancy? Post in community/Issue\!
+
+### May 21 Session
+
+``` r
+gm_long <- gapminder %>% 
+  pivot_longer(lifeExp:gdpPercap,
+               names_to = "measure",
+               values_to = "amount")
+gm_long
+```
+
+    ## # A tibble: 5,112 x 5
+    ##    country     continent  year measure       amount
+    ##    <fct>       <fct>     <int> <chr>          <dbl>
+    ##  1 Afghanistan Asia       1952 lifeExp         28.8
+    ##  2 Afghanistan Asia       1952 pop        8425333  
+    ##  3 Afghanistan Asia       1952 gdpPercap      779. 
+    ##  4 Afghanistan Asia       1957 lifeExp         30.3
+    ##  5 Afghanistan Asia       1957 pop        9240934  
+    ##  6 Afghanistan Asia       1957 gdpPercap      821. 
+    ##  7 Afghanistan Asia       1962 lifeExp         32.0
+    ##  8 Afghanistan Asia       1962 pop       10267083  
+    ##  9 Afghanistan Asia       1962 gdpPercap      853. 
+    ## 10 Afghanistan Asia       1967 lifeExp         34.0
+    ## # … with 5,102 more rows
+
+``` r
+gm_wide <- gapminder %>% 
+  pivot_wider(names_from = year,
+              values_from = c(lifeExp, pop, gdpPercap))
+gm_wide
+```
+
+    ## # A tibble: 142 x 38
+    ##    country continent lifeExp_1952 lifeExp_1957 lifeExp_1962 lifeExp_1967
+    ##    <fct>   <fct>            <dbl>        <dbl>        <dbl>        <dbl>
+    ##  1 Afghan… Asia              28.8         30.3         32.0         34.0
+    ##  2 Albania Europe            55.2         59.3         64.8         66.2
+    ##  3 Algeria Africa            43.1         45.7         48.3         51.4
+    ##  4 Angola  Africa            30.0         32.0         34           36.0
+    ##  5 Argent… Americas          62.5         64.4         65.1         65.6
+    ##  6 Austra… Oceania           69.1         70.3         70.9         71.1
+    ##  7 Austria Europe            66.8         67.5         69.5         70.1
+    ##  8 Bahrain Asia              50.9         53.8         56.9         59.9
+    ##  9 Bangla… Asia              37.5         39.3         41.2         43.5
+    ## 10 Belgium Europe            68           69.2         70.2         70.9
+    ## # … with 132 more rows, and 32 more variables: lifeExp_1972 <dbl>,
+    ## #   lifeExp_1977 <dbl>, lifeExp_1982 <dbl>, lifeExp_1987 <dbl>,
+    ## #   lifeExp_1992 <dbl>, lifeExp_1997 <dbl>, lifeExp_2002 <dbl>,
+    ## #   lifeExp_2007 <dbl>, pop_1952 <int>, pop_1957 <int>, pop_1962 <int>,
+    ## #   pop_1967 <int>, pop_1972 <int>, pop_1977 <int>, pop_1982 <int>,
+    ## #   pop_1987 <int>, pop_1992 <int>, pop_1997 <int>, pop_2002 <int>,
+    ## #   pop_2007 <int>, gdpPercap_1952 <dbl>, gdpPercap_1957 <dbl>,
+    ## #   gdpPercap_1962 <dbl>, gdpPercap_1967 <dbl>, gdpPercap_1972 <dbl>,
+    ## #   gdpPercap_1977 <dbl>, gdpPercap_1982 <dbl>, gdpPercap_1987 <dbl>,
+    ## #   gdpPercap_1992 <dbl>, gdpPercap_1997 <dbl>, gdpPercap_2002 <dbl>,
+    ## #   gdpPercap_2007 <dbl>
+
+### wide to long with only gdp
+
+Using `pivot_longer()` and `separate()`.
+
+``` r
+gm_wide %>%
+  select(country, continent, starts_with("gdp")) %>%
+  pivot_longer(starts_with("gdp"),
+               names_to = "year",
+               values_to = "gdppercap") %>%
+  separate(year, into = c(NA, "year"), sep = "_")
+```
+
+    ## # A tibble: 1,704 x 4
+    ##    country     continent year  gdppercap
+    ##    <fct>       <fct>     <chr>     <dbl>
+    ##  1 Afghanistan Asia      1952       779.
+    ##  2 Afghanistan Asia      1957       821.
+    ##  3 Afghanistan Asia      1962       853.
+    ##  4 Afghanistan Asia      1967       836.
+    ##  5 Afghanistan Asia      1972       740.
+    ##  6 Afghanistan Asia      1977       786.
+    ##  7 Afghanistan Asia      1982       978.
+    ##  8 Afghanistan Asia      1987       852.
+    ##  9 Afghanistan Asia      1992       649.
+    ## 10 Afghanistan Asia      1997       635.
+    ## # … with 1,694 more rows
+
+Using `pivot_longer()` and `names_sep = ...`
+
+``` r
+gm_wide %>% 
+  select(country, continent, starts_with("gdp")) %>%
+  pivot_longer(starts_with("gdp"),
+               names_to = c(NA, "year"),
+               values_to = "gdpPercap",
+               names_sep = 10)
+```
+
+    ## # A tibble: 1,704 x 4
+    ##    country     continent year  gdpPercap
+    ##    <fct>       <fct>     <chr>     <dbl>
+    ##  1 Afghanistan Asia      1952       779.
+    ##  2 Afghanistan Asia      1957       821.
+    ##  3 Afghanistan Asia      1962       853.
+    ##  4 Afghanistan Asia      1967       836.
+    ##  5 Afghanistan Asia      1972       740.
+    ##  6 Afghanistan Asia      1977       786.
+    ##  7 Afghanistan Asia      1982       978.
+    ##  8 Afghanistan Asia      1987       852.
+    ##  9 Afghanistan Asia      1992       649.
+    ## 10 Afghanistan Asia      1997       635.
+    ## # … with 1,694 more rows
+
+Using `pivot_longer()` and `names_pattern = "..."`
+
+``` r
+gm_wide %>% 
+  select(country, continent, starts_with("gdp")) %>% 
+  pivot_longer(starts_with("gdp"),
+               names_to = "year",
+               values_to = "gdpPercap",
+               names_pattern = "gdpPercap_(.*)")
+```
+
+    ## # A tibble: 1,704 x 4
+    ##    country     continent year  gdpPercap
+    ##    <fct>       <fct>     <chr>     <dbl>
+    ##  1 Afghanistan Asia      1952       779.
+    ##  2 Afghanistan Asia      1957       821.
+    ##  3 Afghanistan Asia      1962       853.
+    ##  4 Afghanistan Asia      1967       836.
+    ##  5 Afghanistan Asia      1972       740.
+    ##  6 Afghanistan Asia      1977       786.
+    ##  7 Afghanistan Asia      1982       978.
+    ##  8 Afghanistan Asia      1987       852.
+    ##  9 Afghanistan Asia      1992       649.
+    ## 10 Afghanistan Asia      1997       635.
+    ## # … with 1,694 more rows
+
+### long to wide
+
+``` r
+gm_long %>% 
+  pivot_wider(names_from = c(year, measure),
+              values_from = amount,
+              names_prefix = "silly_")
+```
+
+    ## # A tibble: 142 x 38
+    ##    country continent silly_1952_life… silly_1952_pop silly_1952_gdpP…
+    ##    <fct>   <fct>                <dbl>          <dbl>            <dbl>
+    ##  1 Afghan… Asia                  28.8        8425333             779.
+    ##  2 Albania Europe                55.2        1282697            1601.
+    ##  3 Algeria Africa                43.1        9279525            2449.
+    ##  4 Angola  Africa                30.0        4232095            3521.
+    ##  5 Argent… Americas              62.5       17876956            5911.
+    ##  6 Austra… Oceania               69.1        8691212           10040.
+    ##  7 Austria Europe                66.8        6927772            6137.
+    ##  8 Bahrain Asia                  50.9         120447            9867.
+    ##  9 Bangla… Asia                  37.5       46886859             684.
+    ## 10 Belgium Europe                68          8730405            8343.
+    ## # … with 132 more rows, and 33 more variables: silly_1957_lifeExp <dbl>,
+    ## #   silly_1957_pop <dbl>, silly_1957_gdpPercap <dbl>, silly_1962_lifeExp <dbl>,
+    ## #   silly_1962_pop <dbl>, silly_1962_gdpPercap <dbl>, silly_1967_lifeExp <dbl>,
+    ## #   silly_1967_pop <dbl>, silly_1967_gdpPercap <dbl>, silly_1972_lifeExp <dbl>,
+    ## #   silly_1972_pop <dbl>, silly_1972_gdpPercap <dbl>, silly_1977_lifeExp <dbl>,
+    ## #   silly_1977_pop <dbl>, silly_1977_gdpPercap <dbl>, silly_1982_lifeExp <dbl>,
+    ## #   silly_1982_pop <dbl>, silly_1982_gdpPercap <dbl>, silly_1987_lifeExp <dbl>,
+    ## #   silly_1987_pop <dbl>, silly_1987_gdpPercap <dbl>, silly_1992_lifeExp <dbl>,
+    ## #   silly_1992_pop <dbl>, silly_1992_gdpPercap <dbl>, silly_1997_lifeExp <dbl>,
+    ## #   silly_1997_pop <dbl>, silly_1997_gdpPercap <dbl>, silly_2002_lifeExp <dbl>,
+    ## #   silly_2002_pop <dbl>, silly_2002_gdpPercap <dbl>, silly_2007_lifeExp <dbl>,
+    ## #   silly_2007_pop <dbl>, silly_2007_gdpPercap <dbl>
+
+Some text examples:
+
+silly-1952-lifeExp - nope (double-clicking is awkward)
+silly:1952:lifeExp - nope (double-clicking is awkward)
+silly\_1952\_lifeExp - preferred
+
+## May 28
+
+Coloring a map of the world
+
+``` r
+ggplot(map_data("world"), aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group))
+```
+
+![](README_files/figure-gfm/world-map-1.png)<!-- -->
+
+``` r
+# ggplot(map_data("world2"), aes(x = long, y = lat)) +
+#   geom_polygon(aes(group = group))
+```
+
+Adding color
+
+``` r
+ggplot(map_data("world"), aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = group))
+```
+
+![](README_files/figure-gfm/color-map-1.png)<!-- -->
+
+Combining shape file with continent information
+
+``` r
+world_shapes <- map_data("world") %>% as_tibble()
+
+world_continent <- world_shapes %>% 
+  left_join(gapminder %>% select(country, continent),
+            by = c("region" = "country"))
+```
+
+    ## Warning: Column `region`/`country` joining character vector and factor, coercing
+    ## into character vector
+
+Plot world, color by continent
+
+``` r
+ggplot(world_continent, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = continent))
+```
+
+![](README_files/figure-gfm/color-continent-1.png)<!-- -->
+
+``` r
+world_continent %>% 
+  filter(is.na(continent)) %>% 
+  count(continent)
+```
+
+    ## Warning: Factor `continent` contains implicit NA, consider using
+    ## `forcats::fct_explicit_na`
+
+    ## # A tibble: 1 x 2
+    ##   continent     n
+    ##   <fct>     <int>
+    ## 1 <NA>      34665
+
+``` r
+anti_join(gapminder %>% select(country, continent),
+          world_shapes %>% select(region),
+          by = c("country" = "region")) %>% 
+  count(country)
+```
+
+    ## Warning: Column `country`/`region` joining factor and character vector, coercing
+    ## into character vector
+
+    ## # A tibble: 12 x 2
+    ##    country                 n
+    ##    <fct>               <int>
+    ##  1 Congo, Dem. Rep.       12
+    ##  2 Congo, Rep.            12
+    ##  3 Cote d'Ivoire          12
+    ##  4 Hong Kong, China       12
+    ##  5 Korea, Dem. Rep.       12
+    ##  6 Korea, Rep.            12
+    ##  7 Slovak Republic        12
+    ##  8 Trinidad and Tobago    12
+    ##  9 United Kingdom         12
+    ## 10 United States          12
+    ## 11 West Bank and Gaza     12
+    ## 12 Yemen, Rep.            12
+
+``` r
+anti_join(world_shapes %>% select(region),
+          gapminder %>% select(country, continent),
+          by = c("region" = "country")) %>% 
+  count(region)
+```
+
+    ## Warning: Column `region`/`country` joining character vector and factor, coercing
+    ## into character vector
+
+    ## # A tibble: 122 x 2
+    ##    region               n
+    ##    <chr>            <int>
+    ##  1 American Samoa       8
+    ##  2 Andorra             19
+    ##  3 Anguilla             6
+    ##  4 Antarctica        4658
+    ##  5 Antigua             12
+    ##  6 Armenia            146
+    ##  7 Aruba               10
+    ##  8 Ascension Island    11
+    ##  9 Azerbaijan         264
+    ## 10 Azores              67
+    ## # … with 112 more rows
+
+Relabel gapminder countries
+
+``` r
+gm_region <- gapminder %>% 
+  mutate(
+    country = as.character(country),
+    region = case_when(
+      country == "Congo, Dem. Rep." ~ "Democratic Republic of the Congo",
+      country == "Congo, Rep." ~ "Republic of Congo",
+      country == "Cote d'Ivoire" ~ "Ivory Coast",
+      country == "Korea, Dem. Rep." ~ "North Korea",
+      country == "Korea, Rep." ~ "South Korea",
+      country == "Slovak Republic" ~ "Slovakia",
+      country == "Trinidad and Tobago" ~ "Trinidad",
+      country == "United Kingdom" ~ "UK",
+      country == "United States" ~ "USA",
+      country == "West Bank and Gaza" ~ "Palestine",
+      country == "Yemen, Rep." ~ "Yemen",
+      TRUE ~ country
+  ))
+```
+
+Join relabeled values to shape file
+
+``` r
+world_continent <- left_join(world_shapes,
+                             gm_region,
+                             by = "region")
+```
+
+Map relabeled continents
+
+``` r
+ggplot(world_continent, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = continent))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+
+Life expectancy in 2007 across the globe
+
+``` r
+world_continent %>% 
+  filter(year == 2007) %>% 
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = lifeExp))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+
+gdpPercap in 2007 across the globe
+
+``` r
+world_continent %>% 
+  filter(year == 2007) %>% 
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = gdpPercap))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->

@@ -3,10 +3,12 @@ title: "Recreating Gapminder"
 output: github_document
 ---
 
-```{r}
+```{r message = FALSE}
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 library(gapminder)
+library(maps)
 ```
 
 ## The Visualization
@@ -236,6 +238,192 @@ my_gm %>%
 
 What explains these drops in life expectancy? Post in community/Issue!
 
+
+### May 21 Session
+
+```{r}
+gm_long <- gapminder %>% 
+  pivot_longer(lifeExp:gdpPercap,
+               names_to = "measure",
+               values_to = "amount")
+gm_long
+```
+
+```{r}
+gm_wide <- gapminder %>% 
+  pivot_wider(names_from = year,
+              values_from = c(lifeExp, pop, gdpPercap))
+gm_wide
+```
+
+### wide to long with only gdp
+
+Using `pivot_longer()` and `separate()`.
+
+```{r}
+gm_wide %>%
+  select(country, continent, starts_with("gdp")) %>%
+  pivot_longer(starts_with("gdp"),
+               names_to = "year",
+               values_to = "gdppercap") %>%
+  separate(year, into = c(NA, "year"), sep = "_")
+```
+
+Using `pivot_longer()` and `names_sep = ...`
+
+```{r}
+gm_wide %>% 
+  select(country, continent, starts_with("gdp")) %>%
+  pivot_longer(starts_with("gdp"),
+               names_to = c(NA, "year"),
+               values_to = "gdpPercap",
+               names_sep = 10)
+```
+
+Using `pivot_longer()` and `names_pattern = "..."`
+
+```{r}
+gm_wide %>% 
+  select(country, continent, starts_with("gdp")) %>% 
+  pivot_longer(starts_with("gdp"),
+               names_to = "year",
+               values_to = "gdpPercap",
+               names_pattern = "gdpPercap_(.*)")
+```
+
+### long to wide
+
+```{r}
+gm_long %>% 
+  pivot_wider(names_from = c(year, measure),
+              values_from = amount,
+              names_prefix = "silly_")
+```
+
+Some text examples:
+
+silly-1952-lifeExp - nope (double-clicking is awkward)
+silly:1952:lifeExp - nope (double-clicking is awkward)
+silly_1952_lifeExp - preferred
+
+## May 28
+
+Coloring a map of the world
+
+
+```{r world-map}
+ggplot(map_data("world"), aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group))
+
+# ggplot(map_data("world2"), aes(x = long, y = lat)) +
+#   geom_polygon(aes(group = group))
+```
+
+
+Adding color
+
+```{r color-map}
+ggplot(map_data("world"), aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = group))
+```
+
+Combining shape file with continent information
+
+```{r joining-shape-continent, message = FALSE}
+world_shapes <- map_data("world") %>% as_tibble()
+
+world_continent <- world_shapes %>% 
+  left_join(gapminder %>% select(country, continent),
+            by = c("region" = "country"))
+```
+
+
+Plot world, color by continent
+
+```{r color-continent}
+ggplot(world_continent, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = continent))
+```
+
+```{r}
+world_continent %>% 
+  filter(is.na(continent)) %>% 
+  count(continent)
+```
+
+
+```{r}
+anti_join(gapminder %>% select(country, continent),
+          world_shapes %>% select(region),
+          by = c("country" = "region")) %>% 
+  count(country)
+```
+
+```{r}
+anti_join(world_shapes %>% select(region),
+          gapminder %>% select(country, continent),
+          by = c("region" = "country")) %>% 
+  count(region)
+```
+
+Relabel gapminder countries
+
+```{r}
+gm_region <- gapminder %>% 
+  mutate(
+    country = as.character(country),
+    region = case_when(
+      country == "Congo, Dem. Rep." ~ "Democratic Republic of the Congo",
+      country == "Congo, Rep." ~ "Republic of Congo",
+      country == "Cote d'Ivoire" ~ "Ivory Coast",
+      country == "Korea, Dem. Rep." ~ "North Korea",
+      country == "Korea, Rep." ~ "South Korea",
+      country == "Slovak Republic" ~ "Slovakia",
+      country == "Trinidad and Tobago" ~ "Trinidad",
+      country == "United Kingdom" ~ "UK",
+      country == "United States" ~ "USA",
+      country == "West Bank and Gaza" ~ "Palestine",
+      country == "Yemen, Rep." ~ "Yemen",
+      TRUE ~ country
+  ))
+```
+
+
+Join relabeled values to shape file
+
+```{r}
+world_continent <- left_join(world_shapes,
+                             gm_region,
+                             by = "region")
+```
+
+
+Map relabeled continents
+
+```{r}
+ggplot(world_continent, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = continent))
+```
+
+Life expectancy in 2007 across the globe
+
+```{r}
+world_continent %>% 
+  filter(year == 2007) %>% 
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = lifeExp))
+```
+
+
+gdpPercap in 2007 across the globe
+
+
+```{r}
+world_continent %>% 
+  filter(year == 2007) %>% 
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = gdpPercap))
+```
 
 
 

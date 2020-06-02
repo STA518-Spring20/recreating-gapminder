@@ -5,6 +5,7 @@ Recreating Gapminder
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(forcats)
 library(gapminder)
 library(maps)
 ```
@@ -862,3 +863,238 @@ world_continent %>%
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+
+## June 2
+
+Factors
+
+``` r
+str(gapminder$continent)
+```
+
+    ##  Factor w/ 5 levels "Africa","Americas",..: 3 3 3 3 3 3 3 3 3 3 ...
+
+``` r
+levels(gapminder$continent)
+```
+
+    ## [1] "Africa"   "Americas" "Asia"     "Europe"   "Oceania"
+
+``` r
+nlevels(gapminder$continent)
+```
+
+    ## [1] 5
+
+``` r
+class(gapminder$continent)
+```
+
+    ## [1] "factor"
+
+``` r
+gapminder %>% 
+  count(continent)
+```
+
+    ## # A tibble: 5 x 2
+    ##   continent     n
+    ##   <fct>     <int>
+    ## 1 Africa      624
+    ## 2 Americas    300
+    ## 3 Asia        396
+    ## 4 Europe      360
+    ## 5 Oceania      24
+
+### Unused factors
+
+``` r
+nlevels(gapminder$country)
+```
+
+    ## [1] 142
+
+``` r
+set.seed(123)
+samp_countries <- sample(unique(gapminder$country), size = 7)
+
+samp_gm <- gapminder %>% 
+  filter(country %in% samp_countries)
+
+nlevels(samp_gm$country)
+```
+
+    ## [1] 142
+
+``` r
+samp_gm_drop <- samp_gm %>% 
+  droplevels()
+
+nlevels(samp_gm_drop$country)
+```
+
+    ## [1] 7
+
+### Change factor ordering
+
+By default, countries/continent are ordered alphabetically
+
+``` r
+gapminder %>% 
+  ggplot(aes(y = continent)) +
+  geom_bar()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+
+#### By frequency
+
+``` r
+gapminder %>% 
+  mutate(continent = fct_infreq(continent)) %>% 
+  ggplot(aes(y = continent)) +
+  geom_bar()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+
+``` r
+gapminder %>% 
+  ggplot(aes(y = fct_infreq(continent))) +
+  geom_bar() +
+  labs(y = "continent")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-42-2.png)<!-- -->
+
+#### By reverse freq
+
+``` r
+gapminder %>% 
+  mutate(continent = fct_infreq(continent),
+         continent = fct_rev(continent)) %>% 
+  ggplot(aes(y = continent)) +
+  geom_bar()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+
+#### By another variable
+
+Plot European countries ordered by lifeExp
+
+``` r
+gm_europe_2007 <- gapminder %>% 
+  filter(year == 2007, continent == "Europe")
+
+gm_europe_2007 %>% 
+  ggplot(aes(x = lifeExp, y = country)) +
+  geom_point()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+
+``` r
+gm_europe_2007 %>% 
+  ggplot(aes(x = lifeExp, y = fct_reorder(country, lifeExp))) +
+  geom_point() +
+  labs(y = "country")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->
+
+#### By two variables
+
+``` r
+samp_gm %>% 
+  ggplot(aes(x = year, y = lifeExp, color = country)) +
+  geom_line()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+
+``` r
+samp_gm %>% 
+  ggplot(aes(x = year, y = lifeExp,
+                  color = fct_reorder2(country, year, lifeExp))) +
+  geom_line() +
+  labs(color = "country") # to make better looking label
+```
+
+![](README_files/figure-gfm/unnamed-chunk-45-2.png)<!-- -->
+
+### Recoding levels
+
+``` r
+nlevels(gapminder$country)
+```
+
+    ## [1] 142
+
+``` r
+three_gm <- gapminder %>% 
+  filter(country %in% c("United States", "Greece", "Australia")) %>% 
+  droplevels()
+
+nlevels(three_gm$country)
+```
+
+    ## [1] 3
+
+``` r
+three_gm$country %>% levels()
+```
+
+    ## [1] "Australia"     "Greece"        "United States"
+
+``` r
+three_gm$country %>% 
+  fct_recode("US" = "United States", "Oz" = "Australia") %>% 
+  levels()
+```
+
+    ## [1] "Oz"     "Greece" "US"
+
+``` r
+three_gm2 <- three_gm %>% 
+  mutate(country = fct_recode(country, "US" = "United States", "Oz" = "Australia"))
+```
+
+### Combining factors
+
+``` r
+gm1 <- gapminder %>% 
+  filter(country %in% c("United States", "Mexico"), year > 2000) %>% 
+  droplevels()
+
+gm2 <- gapminder %>% 
+  filter(country %in% c("France", "Germany"), year > 2000) %>% 
+  droplevels()
+
+levels(gm1$country)
+```
+
+    ## [1] "Mexico"        "United States"
+
+``` r
+levels(gm2$country)
+```
+
+    ## [1] "France"  "Germany"
+
+Can we simply combine these
+    datasets?
+
+``` r
+c(gm1$country,gm2$country)
+```
+
+    ## [1] 1 1 2 2 1 1 2 2
+
+``` r
+fct_c(gm1$country,gm2$country)
+```
+
+    ## [1] Mexico        Mexico        United States United States France       
+    ## [6] France        Germany       Germany      
+    ## Levels: Mexico United States France Germany

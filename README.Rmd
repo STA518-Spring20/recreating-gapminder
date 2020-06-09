@@ -3,13 +3,15 @@ title: "Recreating Gapminder"
 output: github_document
 ---
 
-```{r message = FALSE}
+```{r load-packages, message = FALSE}
 library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(forcats)
 library(gapminder)
 library(maps)
+library(patchwork)
+library(gridExtra)
 ```
 
 ## The Visualization
@@ -569,6 +571,60 @@ c(gm1$country,gm2$country)
 
 fct_c(gm1$country,gm2$country)
 ```
+
+## June 9 Session
+
+Adding table to a plot figure
+
+```{r over-under, message = FALSE, fig.width = 11}
+tab_lifeExp <- gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(mean_lifeExp = mean(lifeExp, na.rm = TRUE),
+            mean_lifeExp = round(mean_lifeExp, 1)) %>% 
+  pivot_wider(names_from = year, values_from = mean_lifeExp, names_prefix = "mean\nlifeExp\n")
+
+plot_lifeExp <- gapminder %>% 
+  ggplot(aes(x = year, y = lifeExp, color = continent)) +
+  geom_point(alpha = 0.3, size = 2) +
+  geom_smooth(se = FALSE)
+
+plot_lifeExp / tableGrob(tab_lifeExp)
+
+```
+
+
+```{r side-by-side, fig.width = 11, message = FALSE}
+tab_lifeExp_continent <- gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(mean_lifeExp = mean(lifeExp, na.rm = TRUE),
+            mean_lifeExp = round(mean_lifeExp, 1)) %>% 
+  pivot_wider(names_from = continent, values_from = mean_lifeExp, names_prefix = "Mean\nLifeExp\n")
+
+plot_lifeExp + tableGrob(tab_lifeExp_continent)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

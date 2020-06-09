@@ -8,6 +8,8 @@ library(tidyr)
 library(forcats)
 library(gapminder)
 library(maps)
+library(patchwork)
+library(gridExtra)
 ```
 
 ## The Visualization
@@ -24,7 +26,7 @@ ggplot(data = gapminder) +
        subtitle = "For all years")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 ## More with dplyr
 
@@ -103,7 +105,7 @@ my_gm %>%
   geom_line()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ## May 12
 
@@ -272,7 +274,7 @@ my_gm %>%
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 | Function type        | Explanation                                                                                                    | Examples                            | In `dplyr`                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------- |
@@ -840,7 +842,7 @@ ggplot(world_continent, aes(x = long, y = lat)) +
   geom_polygon(aes(group = group, fill = continent))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 Life expectancy in 2007 across the globe
 
@@ -851,7 +853,7 @@ world_continent %>%
   geom_polygon(aes(group = group, fill = lifeExp))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 gdpPercap in 2007 across the globe
 
@@ -862,7 +864,7 @@ world_continent %>%
   geom_polygon(aes(group = group, fill = gdpPercap))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
 
 ## June 2
 
@@ -945,7 +947,7 @@ gapminder %>%
   geom_bar()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
 
 #### By frequency
 
@@ -956,7 +958,7 @@ gapminder %>%
   geom_bar()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
 
 ``` r
 gapminder %>% 
@@ -965,7 +967,7 @@ gapminder %>%
   labs(y = "continent")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-42-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-41-2.png)<!-- -->
 
 #### By reverse freq
 
@@ -977,7 +979,7 @@ gapminder %>%
   geom_bar()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 #### By another variable
 
@@ -992,7 +994,7 @@ gm_europe_2007 %>%
   geom_point()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 ``` r
 gm_europe_2007 %>% 
@@ -1001,7 +1003,7 @@ gm_europe_2007 %>%
   labs(y = "country")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-43-2.png)<!-- -->
 
 #### By two variables
 
@@ -1011,7 +1013,7 @@ samp_gm %>%
   geom_line()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 ``` r
 samp_gm %>% 
@@ -1021,7 +1023,7 @@ samp_gm %>%
   labs(color = "country") # to make better looking label
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-45-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->
 
 ### Recoding levels
 
@@ -1098,3 +1100,36 @@ fct_c(gm1$country,gm2$country)
     ## [1] Mexico        Mexico        United States United States France       
     ## [6] France        Germany       Germany      
     ## Levels: Mexico United States France Germany
+
+## June 9 Session
+
+Adding table to a plot figure
+
+``` r
+tab_lifeExp <- gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(mean_lifeExp = mean(lifeExp, na.rm = TRUE),
+            mean_lifeExp = round(mean_lifeExp, 1)) %>% 
+  pivot_wider(names_from = year, values_from = mean_lifeExp, names_prefix = "mean\nlifeExp\n")
+
+plot_lifeExp <- gapminder %>% 
+  ggplot(aes(x = year, y = lifeExp, color = continent)) +
+  geom_point(alpha = 0.3, size = 2) +
+  geom_smooth(se = FALSE)
+
+plot_lifeExp / tableGrob(tab_lifeExp)
+```
+
+![](README_files/figure-gfm/over-under-1.png)<!-- -->
+
+``` r
+tab_lifeExp_continent <- gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(mean_lifeExp = mean(lifeExp, na.rm = TRUE),
+            mean_lifeExp = round(mean_lifeExp, 1)) %>% 
+  pivot_wider(names_from = continent, values_from = mean_lifeExp, names_prefix = "Mean\nLifeExp\n")
+
+plot_lifeExp + tableGrob(tab_lifeExp_continent)
+```
+
+![](README_files/figure-gfm/side-by-side-1.png)<!-- -->

@@ -4,3 +4,6 @@ dplyr
 tidyr
 gapminder
 maps
+forcats
+patchwork
+gridExtra

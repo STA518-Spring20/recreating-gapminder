@@ -10,6 +10,8 @@ library(gapminder)
 library(maps)
 library(patchwork)
 library(gridExtra)
+library(gganimate)
+library(scales)
 ```
 
 ## The Visualization
@@ -1133,3 +1135,30 @@ plot_lifeExp + tableGrob(tab_lifeExp_continent)
 ```
 
 ![](README_files/figure-gfm/side-by-side-1.png)<!-- -->
+
+## June 11 Session
+
+Animate that plot\!
+
+``` r
+gapminder %>% 
+  ggplot(mapping = aes(x = gdpPercap, y = lifeExp, 
+                       size = pop, color = continent)) +
+  geom_point(alpha = 0.5) +
+  scale_x_log10(label = label_dollar()) +
+  scale_size_continuous(label = comma) +
+  scale_color_manual(values = continent_colors, guide = FALSE) +
+  labs(x = "Income", 
+       y = "Life Expectancy", 
+       color = "World Region", 
+       size = "Population", 
+       title = "Year: {frame_time}") +
+  # annotate("text", y = 58, x = 6000, label = "{frame_time}", size = 30, alpha = 0.5) +
+  theme_minimal() +
+  transition_time(year) +
+  ease_aes("linear")
+```
+
+## June 16 Session
+
+This is my temp-branch.

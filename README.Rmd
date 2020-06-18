@@ -13,6 +13,7 @@ library(maps)
 library(patchwork)
 library(gridExtra)
 library(gganimate)
+library(gifski)
 library(scales)
 ```
 
@@ -578,7 +579,7 @@ fct_c(gm1$country,gm2$country)
 
 Adding table to a plot figure
 
-```{r over-under, message = FALSE, fig.width = 11}
+```{r over-under, message = FALSE, fig.width = 11, cache = TRUE}
 tab_lifeExp <- gapminder %>% 
   group_by(continent, year) %>% 
   summarise(mean_lifeExp = mean(lifeExp, na.rm = TRUE),
@@ -595,7 +596,7 @@ plot_lifeExp / tableGrob(tab_lifeExp)
 ```
 
 
-```{r side-by-side, fig.width = 11, message = FALSE}
+```{r side-by-side, fig.width = 11, message = FALSE, cache = TRUE}
 tab_lifeExp_continent <- gapminder %>% 
   group_by(continent, year) %>% 
   summarise(mean_lifeExp = mean(lifeExp, na.rm = TRUE),
@@ -609,7 +610,7 @@ plot_lifeExp + tableGrob(tab_lifeExp_continent)
 
 Animate that plot!
 
-```{r animated-gapminder, eval = FALSE}
+```{r animated-gapminder, cache = TRUE}
 gapminder %>% 
   ggplot(mapping = aes(x = gdpPercap, y = lifeExp, 
                        size = pop, color = continent)) +
@@ -631,7 +632,110 @@ gapminder %>%
 
 ## June 16 Session
 
-This is my temp-branch.
+This is my temp-branch. **Oops, this didn't work how I wanted it to... Back to the drawing board!**
+
+### Update the `range()` function
+
+```{r error = TRUE}
+x <- 1:100
+range(x)
+
+max(x)
+min(x)
+
+max(x) - min(x)
+
+correct_range <- function(x){
+  max(x) - min(x)
+}
+
+correct_range(x)
+
+correct_range(gapminder$lifeExp)
+correct_range("Go Lakers!")
+correct_range(NA)
+
+?quantile
+```
+
+### Update `range()` function with `quantile()`
+
+```{r error = TRUE}
+x
+
+quantile(x, probs = 1)
+quantile(x, probs = 0)
+
+specified_range <- function(x, probs = c(0, 1)){
+  quantile(x, probs = max(probs)) - quantile(x, probs = min(probs))
+}
+
+
+specified_range(x)
+
+# IQR
+specified_range(x, probs = c(.25, .75))
+
+# Lower 75%
+specified_range(x, probs = c(.75, 0))
+
+specified_range("Go Lakers!")
+specified_range(NA)
+```
+
+## June 18 Session
+
+### Environments
+
+```{r}
+x <- 10
+y <- "Neat!"
+f <- function(z) z <- 0
+
+#ls()
+```
+
+Every time a function is called, a new environmnet is created to host the execution:
+
+```{r}
+h <- function(h_x){
+  g <- function(g_x){
+    print("Inside g")
+    print(environment())
+    print(ls())
+  }
+  g(5)
+  print("Inside f")
+  print(environment())
+  print(ls())
+}
+
+#ls()
+h(6)
+ls()
+
+h(6)
+```
+
+Local vs global variables
+
+```{r}
+outer_fn <- function(){
+  a <- 2 #local to outer_fn
+  inner_fn <- function(){
+    a <- 4 # local to inner_fn
+    print(a)
+  }
+  inner_fn()
+  print(a)
+}
+
+outer_fn()
+
+a <- 1 # local to GlobalEnv
+outer_fn()
+print(a)
+```
 
 
 

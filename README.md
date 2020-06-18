@@ -11,6 +11,7 @@ library(maps)
 library(patchwork)
 library(gridExtra)
 library(gganimate)
+library(gifski)
 library(scales)
 ```
 
@@ -1159,6 +1160,235 @@ gapminder %>%
   ease_aes("linear")
 ```
 
+    ## Warning: No renderer available. Please install the gifski, av, or magick package
+    ## to create animated output
+
+    ## NULL
+
 ## June 16 Session
 
-This is my temp-branch.
+This is my temp-branch. **Oops, this didn’t work how I wanted it to…
+Back to the drawing board\!**
+
+### Update the `range()` function
+
+``` r
+x <- 1:100
+range(x)
+```
+
+    ## [1]   1 100
+
+``` r
+max(x)
+```
+
+    ## [1] 100
+
+``` r
+min(x)
+```
+
+    ## [1] 1
+
+``` r
+max(x) - min(x)
+```
+
+    ## [1] 99
+
+``` r
+correct_range <- function(x){
+  max(x) - min(x)
+}
+
+correct_range(x)
+```
+
+    ## [1] 99
+
+``` r
+correct_range(gapminder$lifeExp)
+```
+
+    ## [1] 59.004
+
+``` r
+correct_range("Go Lakers!")
+```
+
+    ## Error in max(x) - min(x): non-numeric argument to binary operator
+
+``` r
+correct_range(NA)
+```
+
+    ## [1] NA
+
+``` r
+?quantile
+```
+
+### Update `range()` function with `quantile()`
+
+``` r
+x
+```
+
+    ##   [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
+    ##  [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36
+    ##  [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54
+    ##  [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72
+    ##  [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90
+    ##  [91]  91  92  93  94  95  96  97  98  99 100
+
+``` r
+quantile(x, probs = 1)
+```
+
+    ## 100% 
+    ##  100
+
+``` r
+quantile(x, probs = 0)
+```
+
+    ## 0% 
+    ##  1
+
+``` r
+specified_range <- function(x, probs = c(0, 1)){
+  quantile(x, probs = max(probs)) - quantile(x, probs = min(probs))
+}
+
+
+specified_range(x)
+```
+
+    ## 100% 
+    ##   99
+
+``` r
+# IQR
+specified_range(x, probs = c(.25, .75))
+```
+
+    ##  75% 
+    ## 49.5
+
+``` r
+# Lower 75%
+specified_range(x, probs = c(.75, 0))
+```
+
+    ##   75% 
+    ## 74.25
+
+``` r
+specified_range("Go Lakers!")
+```
+
+    ## Error in (1 - h) * qs[i]: non-numeric argument to binary operator
+
+``` r
+specified_range(NA)
+```
+
+    ## Error in quantile.default(x, probs = max(probs)): missing values and NaN's not allowed if 'na.rm' is FALSE
+
+## June 18 Session
+
+### Environments
+
+``` r
+x <- 10
+y <- "Neat!"
+f <- function(z) z <- 0
+
+#ls()
+```
+
+Every time a function is called, a new environmnet is created to host
+the execution:
+
+``` r
+h <- function(h_x){
+  g <- function(g_x){
+    print("Inside g")
+    print(environment())
+    print(ls())
+  }
+  g(5)
+  print("Inside f")
+  print(environment())
+  print(ls())
+}
+
+#ls()
+h(6)
+```
+
+    ## [1] "Inside g"
+    ## <environment: 0x71d0400>
+    ## [1] "g_x"
+    ## [1] "Inside f"
+    ## <environment: 0x71d0240>
+    ## [1] "g"   "h_x"
+
+``` r
+ls()
+```
+
+    ##  [1] "correct_range"         "f"                     "gm_europe_2007"       
+    ##  [4] "gm_long"               "gm_region"             "gm_wide"              
+    ##  [7] "gm1"                   "gm2"                   "h"                    
+    ## [10] "my_gm"                 "plot_lifeExp"          "samp_countries"       
+    ## [13] "samp_gm"               "samp_gm_drop"          "specified_range"      
+    ## [16] "tab_lifeExp"           "tab_lifeExp_continent" "three_gm"             
+    ## [19] "three_gm2"             "us_gm"                 "us_tib"               
+    ## [22] "world_continent"       "world_shapes"          "x"                    
+    ## [25] "y"
+
+``` r
+h(6)
+```
+
+    ## [1] "Inside g"
+    ## <environment: 0x645da38>
+    ## [1] "g_x"
+    ## [1] "Inside f"
+    ## <environment: 0x6f5e0f0>
+    ## [1] "g"   "h_x"
+
+Local vs global variables
+
+``` r
+outer_fn <- function(){
+  a <- 2 #local to outer_fn
+  inner_fn <- function(){
+    a <- 4 # local to inner_fn
+    print(a)
+  }
+  inner_fn()
+  print(a)
+}
+
+outer_fn()
+```
+
+    ## [1] 4
+    ## [1] 2
+
+``` r
+a <- 1 # local to GlobalEnv
+outer_fn()
+```
+
+    ## [1] 4
+    ## [1] 2
+
+``` r
+print(a)
+```
+
+    ## [1] 1
